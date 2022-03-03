@@ -61,7 +61,7 @@ struct SendData: View {
                     .frame(minWidth:0, maxWidth:CGFloat.infinity, minHeight: 75)
                     .background(Color.blue)
                     .padding()
-            } else if (self.user.id.isEmpty || self.user.side[user.selected_side].isEmpty || self.user.hospitals[user.selected_hospital].isEmpty || self.user.disease[user.selected_disease].isEmpty){
+            } else if (self.user.id.isEmpty || self.user.side[user.selected_side].isEmpty || self.user.hospitals[user.selected_hospital].isEmpty || self.user.disease[user.selected_disease].isEmpty || self.user.disease[user.selected_gender].isEmpty || self.user.birthdate.isEmpty){
                 Button(action: {
                     showingAlert = true //空欄があるとエラー
                 }) {
