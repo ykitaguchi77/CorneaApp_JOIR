@@ -81,7 +81,7 @@ struct SendData: View {
                 showingAlert = false
                 GenerateHashID()
                 SaveToResultHolder()
-                ssmix2Folder(id: self.user.hashid, date: self.user.date, hospitalCode: "1234567") //保存用のフォルダを作成
+                ssmix2Folder() //保存用のフォルダを作成
                 SaveToDoc()
                 self.user.isSendData = true
                 self.user.imageNum += 1 //画像番号を増やす
@@ -216,32 +216,71 @@ struct SendData: View {
         return shorterSide
     }
     
-    func ssmix2Folder(id: String, date: Date, hospitalCode: String)->String{
+//    func ssmix2Folder(id: String, date: Date, hospitalCode: String)->String{
+//
+//        //document folderのパス
+//        let dir = NSHomeDirectory() + "/Documents"
+//
+//        //追加するフォルダの名前を定義
+//        let id1 = id.prefix(3) //最初の3文字
+//        let id2 = id.dropFirst(3).prefix(3) //3から6文字目
+//
+//        let dateFormatter = DateFormatter()
+//        dateFormatter.dateFormat = "yyyyMMdd"
+//        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+//        dateFormatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
+//        let examDate = dateFormatter.string(from: date)
+//
+//        let dateFormatter2 = DateFormatter()
+//        dateFormatter2.dateFormat = "yyyyMMddHHmmSSS"
+//        dateFormatter2.locale = Locale(identifier: "en_US_POSIX")
+//        dateFormatter2.timeZone = TimeZone(identifier: "Asia/Tokyo")
+//        let examDate2 = dateFormatter2.string(from: date)
+//
+//        let dataType = "SUMAHO"
+//        let maker = "APL"
+//        let deviceName = "000"
+//        let orderNum = "0000000000000000"
+//        let keyInfo = String(hospitalCode) + maker + String(deviceName) + String(orderNum)
+//        let contentsFolder = id + "_" + examDate + "_" + dataType + "_" + keyInfo + "_" + examDate2 + "_26_1"
+//        let folderPath = "\(dir)/storage/\(id1)/\(id2)/\(id)/\(examDate)/\(dataType)/\(contentsFolder)"
+//
+//        let fileManager = FileManager.default
+//        do{
+//            try fileManager.createDirectory(atPath: folderPath,  withIntermediateDirectories: true, attributes: nil)
+//        }catch {
+//            print("フォルダ作成に失敗 error=(error)")
+//        }
+//        return folderPath
+//    }
+    
+    public func ssmix2Folder(){
         
         //document folderのパス
         let dir = NSHomeDirectory() + "/Documents"
         
         //追加するフォルダの名前を定義
-        let id1 = id.prefix(3) //最初の3文字
-        let id2 = id.dropFirst(3).prefix(3) //3から6文字目
+        let id = self.user.id
+        let id1 = self.user.id.prefix(3) //最初の3文字
+        let id2 = self.user.id.dropFirst(3).prefix(3) //3から6文字目
         
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyyMMdd"
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         dateFormatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
-        let examDate = dateFormatter.string(from: date)
+        let examDate = dateFormatter.string(from: self.user.date)
         
         let dateFormatter2 = DateFormatter()
         dateFormatter2.dateFormat = "yyyyMMddHHmmSSS"
         dateFormatter2.locale = Locale(identifier: "en_US_POSIX")
         dateFormatter2.timeZone = TimeZone(identifier: "Asia/Tokyo")
-        let examDate2 = dateFormatter2.string(from: date)
+        let examDate2 = dateFormatter2.string(from: self.user.date)
         
         let dataType = "SUMAHO"
         let maker = "APL"
         let deviceName = "000"
         let orderNum = "0000000000000000"
-        let keyInfo = String(hospitalCode) + maker + String(deviceName) + String(orderNum)
+        let keyInfo = self.user.hospitalcode[user.selected_hospital] + maker + String(deviceName) + String(orderNum)
         let contentsFolder = id + "_" + examDate + "_" + dataType + "_" + keyInfo + "_" + examDate2 + "_26_1"
         let folderPath = "\(dir)/storage/\(id1)/\(id2)/\(id)/\(examDate)/\(dataType)/\(contentsFolder)"
 
@@ -251,7 +290,6 @@ struct SendData: View {
         }catch {
             print("フォルダ作成に失敗 error=(error)")
         }
-        return folderPath
     }
     
     func exportMovie(sourceURL: URL, destinationURL: URL, fileType: AVFileType) -> Void {
