@@ -3,6 +3,7 @@
 //  CorneaApp
 //
 //  Created by Yoshiyuki Kitaguchi on 2021/04/18.
+//  フォルダ作成と保存　https://qiita.com/Hyperbolic_____/items/a4581ed08cec4c7df9ea
 //
 import SwiftUI
 import CoreData
@@ -61,8 +62,14 @@ struct SendData: View {
                     .frame(minWidth:0, maxWidth:CGFloat.infinity, minHeight: 75)
                     .background(Color.blue)
                     .padding()
-            } else if (self.user.id.isEmpty || self.user.side[user.selected_side].isEmpty || self.user.hospitals[user.selected_hospital].isEmpty || self.user.disease[user.selected_disease].isEmpty || self.user.disease[user.selected_gender].isEmpty || self.user.birthdate.isEmpty){
+            } else if (self.user.id.isEmpty || self.user.side[user.selected_side].isEmpty || self.user.hospitals[user.selected_hospital].isEmpty || self.user.disease[user.selected_disease].isEmpty || self.user.gender[user.selected_gender].isEmpty || self.user.birthdate.isEmpty){
                 Button(action: {
+                    print("id: \(user.id)")
+                    print("side: \(user.side[user.selected_side])")
+                    print("hospital \(user.hospitals[user.selected_hospital])")
+                    print("disease: \(user.disease[user.selected_disease])")
+                    print("side: \(user.gender[user.selected_gender])")
+                    print("birthdate: \(user.birthdate)")
                     showingAlert = true //空欄があるとエラー
                 }) {
                     HStack{
@@ -73,6 +80,22 @@ struct SendData: View {
                         .font(Font.largeTitle)
                 }
                     .alert(isPresented: $showingAlert){Alert(title: Text("項目に空欄があります"))}
+                    .frame(minWidth:0, maxWidth:CGFloat.infinity, minHeight: 75)
+                    .background(Color.black)
+                    .padding()
+            } else if (self.user.birthdate.count != 8){
+                Button(action: {
+                    print("birthdate: \(user.birthdate)")
+                    showingAlert = true //空欄があるとエラー
+                }) {
+                    HStack{
+                        Image(systemName: "square.and.arrow.up")
+                        Text("送信")
+                    }
+                        .foregroundColor(Color.white)
+                        .font(Font.largeTitle)
+                }
+                    .alert(isPresented: $showingAlert){Alert(title: Text("生年月日は8桁で入力して下さい"))}
                     .frame(minWidth:0, maxWidth:CGFloat.infinity, minHeight: 75)
                     .background(Color.black)
                     .padding()
@@ -104,30 +127,52 @@ struct SendData: View {
     }
             
     
+//    public func GenerateHashID(){
+//        let dateFormatter = DateFormatter()
+//        dateFormatter.locale = Locale(identifier: "ja_JP")
+//        dateFormatter.dateStyle = .medium
+//        dateFormatter.dateFormat = "yyyyMMdd"
+//
+//        //newdateid: 20211204-11223344-3
+//        let newdateid = "\(dateFormatter.string(from:self.user.date))-\(self.user.id)-\(self.user.imageNum)"
+//        let dateid = Data(newdateid.utf8)
+//        let hashid = SHA256.hash(data: dateid)
+//        user.hashid = hashid.compactMap { String(format: "%02x", $0) }.joined()
+//        print(user.hashid)
+//    }
+    
+    //JOIRのHASH化プロトコル
     public func GenerateHashID(){
+        let id = self.user.id
+        let gender = self.user.gender[user.selected_gender]
+
         let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "ja_JP")
-        dateFormatter.dateStyle = .medium
-        dateFormatter.dateFormat = "yyyyMMdd"
-        
-        //newdateid: 20211204-11223344-3
-        let newdateid = "\(dateFormatter.string(from:self.user.date))-\(self.user.id)-\(self.user.imageNum)"
-        let dateid = Data(newdateid.utf8)
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
+        var birthdate = self.user.birthdate
+        birthdate.insert("-", at: birthdate.index(birthdate.startIndex, offsetBy: 6))
+        birthdate.insert("-", at: birthdate.index(birthdate.startIndex, offsetBy: 4))
+
+        let hospitalcode = self.user.hospitalcode[user.selected_gender]
+        let newid = id + gender + birthdate + hospitalcode
+        let dateid = Data(newid.utf8)
         let hashid = SHA256.hash(data: dateid)
         user.hashid = hashid.compactMap { String(format: "%02x", $0) }.joined()
-        print(user.hashid)
+
+        print("Generated hashid: \(user.hashid)")
     }
     
     //ResultHolderにテキストデータを格納
     public func SaveToResultHolder(){
         //var imagenum: String = String(user.imageNum)
-        ResultHolder.GetInstance().SetAnswer(q1: self.stringDate(), q2: user.hashid, q3: user.id, q4: self.numToString(num: self.user.imageNum), q5: self.user.side[user.selected_side], q6: self.user.hospitals[user.selected_hospital], q7: self.user.disease[user.selected_disease], q8: user.free_disease)
+        ResultHolder.GetInstance().SetAnswer(q1: stringDate(date: self.user.date), q2: user.hashid, q3: user.id, q4: self.numToString(num: self.user.imageNum), q5: self.user.side[user.selected_side], q6: self.user.hospitals[user.selected_hospital], q7: self.user.disease[user.selected_disease], q8: self.user.free_disease, q9: self.user.gender[user.selected_gender], q10: self.user.birthdate)
     }
     
-    public func stringDate()->String{
+    public func stringDate(date:Date)->String{
         let df = DateFormatter()
         df.dateFormat = "yyyyMMdd"
-        let stringDate = df.string(from: user.date)
+        let stringDate = df.string(from: date)
         return stringDate
     }
     
@@ -144,10 +189,23 @@ struct SendData: View {
         let images = ResultHolder.GetInstance().GetUIImages()
         let jsonfile = ResultHolder.GetInstance().GetAnswerJson()
         let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        //let directory = self.user.hashid+".png"
-        let fileURL = documentsURL.appendingPathComponent(self.user.hashid+".png")
-        let movieURL = documentsURL.appendingPathComponent(self.user.hashid+".mp4")
-        //print(fileURL)
+        let photoURL = documentsURL.appendingPathComponent(imageName()+".png")
+        let movieURL = documentsURL.appendingPathComponent(imageName()+".mp4")
+        let ssmixURL = URL(string: self.user.ssmixpath)!
+        let ssmixPhotoURL = ssmixURL.appendingPathComponent(imageName()+".png")
+        let ssmixMovieURL = ssmixURL.appendingPathComponent(imageName()+".mp4")
+                
+//        let testURL = "file://" + NSHomeDirectory() + "/Documents/test"
+//        do{
+//            try FileManager.default.createDirectory(atPath: testURL,  withIntermediateDirectories: true, attributes: nil)
+//        }catch {
+//            print("フォルダ作成に失敗 error=(error)")
+//        }
+//        let testURL2 = URL(string: testURL)
+//        let testJsonURL = testURL2!.appendingPathComponent("aaa"+".png")
+//
+//        print("testURL \(testURL)")
+//        print("testJsonURL \(testJsonURL)")
         
         //動画が保存されていない場合
         if ResultHolder.GetInstance().GetMovieUrls() == ""{
@@ -157,10 +215,21 @@ struct SendData: View {
                 // jpgで保存する場合
                 // let jpgImageData = UIImageJPEGRepresentation(image, 1.0)
                 do {
-                    try pngImageData()!.write(to: fileURL)
-                    print(fileURL)
+                    try pngImageData()!.write(to: photoURL)
                     print("successfully saved PNG to doc")
                 } catch {
+                    //エラー処理
+                    print("image save error")
+                    return false
+                }
+                
+                print("ssmixPhotoURL: \(ssmixPhotoURL)")
+                do {
+                    try pngImageData()!.write(to: ssmixPhotoURL)
+                    print("successfully saved PNG to doc (ssmix)")
+                    
+                } catch {
+                    print("image save error (ssmix)")
                     //エラー処理
                     return false
                 }
@@ -171,20 +240,35 @@ struct SendData: View {
             let fileType: AVFileType = AVFileType.mp4
             // 動画をエクスポートする
             exportMovie(sourceURL: URL(string:ResultHolder.GetInstance().GetMovieUrls())!, destinationURL: movieURL, fileType: fileType)
+            exportMovie(sourceURL: URL(string:ResultHolder.GetInstance().GetMovieUrls())!, destinationURL: ssmixMovieURL, fileType: fileType)
+
         }
             
             
         //jsonを保存
-        let fileURL2 = documentsURL.appendingPathComponent(self.user.hashid+".json")
+        let jsonURL = documentsURL.appendingPathComponent(imageName()+".json")
+        let ssmixJsonURL = ssmixURL.appendingPathComponent(imageName()+".json")
+        
+        print("ssmixJsonURL: \(ssmixJsonURL)")
         do {
-            try jsonfile.write(to: fileURL2, atomically: true, encoding: String.Encoding.utf8)
-            print(fileURL2)
+            try jsonfile.write(to: jsonURL, atomically: true, encoding: String.Encoding.utf8)
             print("successfully saved json to doc")
         } catch {
             //エラー処理
             print("Jsonを保存できませんでした")
             return false
         }
+        
+        
+        do {
+            try jsonfile.write(to: ssmixJsonURL, atomically: true, encoding: .utf8)
+            print("successfully saved json to doc (ssmix)")
+        } catch {
+            //エラー処理
+            print("Jsonを保存できませんでした (ssmix)")
+            return false
+        }
+        
         return true
     }
         
@@ -216,80 +300,66 @@ struct SendData: View {
         return shorterSide
     }
     
-//    func ssmix2Folder(id: String, date: Date, hospitalCode: String)->String{
-//
-//        //document folderのパス
-//        let dir = NSHomeDirectory() + "/Documents"
-//
-//        //追加するフォルダの名前を定義
-//        let id1 = id.prefix(3) //最初の3文字
-//        let id2 = id.dropFirst(3).prefix(3) //3から6文字目
-//
-//        let dateFormatter = DateFormatter()
-//        dateFormatter.dateFormat = "yyyyMMdd"
-//        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-//        dateFormatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
-//        let examDate = dateFormatter.string(from: date)
-//
-//        let dateFormatter2 = DateFormatter()
-//        dateFormatter2.dateFormat = "yyyyMMddHHmmSSS"
-//        dateFormatter2.locale = Locale(identifier: "en_US_POSIX")
-//        dateFormatter2.timeZone = TimeZone(identifier: "Asia/Tokyo")
-//        let examDate2 = dateFormatter2.string(from: date)
-//
-//        let dataType = "SUMAHO"
-//        let maker = "APL"
-//        let deviceName = "000"
-//        let orderNum = "0000000000000000"
-//        let keyInfo = String(hospitalCode) + maker + String(deviceName) + String(orderNum)
-//        let contentsFolder = id + "_" + examDate + "_" + dataType + "_" + keyInfo + "_" + examDate2 + "_26_1"
-//        let folderPath = "\(dir)/storage/\(id1)/\(id2)/\(id)/\(examDate)/\(dataType)/\(contentsFolder)"
-//
-//        let fileManager = FileManager.default
-//        do{
-//            try fileManager.createDirectory(atPath: folderPath,  withIntermediateDirectories: true, attributes: nil)
-//        }catch {
-//            print("フォルダ作成に失敗 error=(error)")
-//        }
-//        return folderPath
-//    }
-    
-    public func ssmix2Folder(){
+
         
-        //document folderのパス
-        let dir = NSHomeDirectory() + "/Documents"
-        
-        //追加するフォルダの名前を定義
-        let id = self.user.id
-        let id1 = self.user.id.prefix(3) //最初の3文字
-        let id2 = self.user.id.dropFirst(3).prefix(3) //3から6文字目
-        
+    //JOIRの画像命名
+    public func imageName() -> String{
+        let id = self.user.hashid
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyyMMdd"
+        dateFormatter.dateFormat = "yyyyMMdd_HHmmSSS"
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         dateFormatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
         let examDate = dateFormatter.string(from: self.user.date)
-        
-        let dateFormatter2 = DateFormatter()
-        dateFormatter2.dateFormat = "yyyyMMddHHmmSSS"
-        dateFormatter2.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter2.timeZone = TimeZone(identifier: "Asia/Tokyo")
-        let examDate2 = dateFormatter2.string(from: self.user.date)
-        
-        let dataType = "SUMAHO"
         let maker = "APL"
-        let deviceName = "000"
-        let orderNum = "0000000000000000"
-        let keyInfo = self.user.hospitalcode[user.selected_hospital] + maker + String(deviceName) + String(orderNum)
-        let contentsFolder = id + "_" + examDate + "_" + dataType + "_" + keyInfo + "_" + examDate2 + "_26_1"
-        let folderPath = "\(dir)/storage/\(id1)/\(id2)/\(id)/\(examDate)/\(dataType)/\(contentsFolder)"
+        let side = self.user.sidecode[user.selected_side]
+        let imageNum = String(format: "%03d", self.user.imageNum)
+        let imageName = id + "_" + examDate + "_" + maker + "_" + side + "_" + imageNum
+        //print(imageName)
+        return imageName
+    }
+    
+    public func ssmix2Folder(){
+        //1回目のみフォルダを作成する。すでにフォルダがあればそこに追加保存する
+        if self.user.ssmixpath.isEmpty{
+            //document folderのパス
+            let dir = NSHomeDirectory() + "/Documents"
+            
+            //追加するフォルダの名前を定義
+            let id = self.user.hashid
+            let id1 = self.user.hashid.prefix(3) //最初の3文字
+            let id2 = self.user.hashid.dropFirst(3).prefix(3) //3から6文字目
+            
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyyMMdd"
+            dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            dateFormatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
+            let examDate = dateFormatter.string(from: self.user.date)
+            
+            let dateFormatter2 = DateFormatter()
+            dateFormatter2.dateFormat = "yyyyMMddHHmmSSS"
+            dateFormatter2.locale = Locale(identifier: "en_US_POSIX")
+            dateFormatter2.timeZone = TimeZone(identifier: "Asia/Tokyo")
+            let examDate2 = dateFormatter2.string(from: self.user.date)
+            
+            let dataType = "SUMAHO"
+            let maker = "APL"
+            let deviceName = "000"
+            let orderNum = "0000000000000000"
+            let keyInfo = self.user.hospitalcode[user.selected_hospital] + maker + String(deviceName) + String(orderNum)
+            let contentsFolder = id + "_" + examDate + "_" + dataType + "_" + keyInfo + "_" + examDate2 + "_26_1"
+            let folderPath = "\(dir)/storage/\(id1)/\(id2)/\(id)/\(examDate)/\(dataType)/\(contentsFolder)"
 
-        let fileManager = FileManager.default
-        do{
-            try fileManager.createDirectory(atPath: folderPath,  withIntermediateDirectories: true, attributes: nil)
-        }catch {
-            print("フォルダ作成に失敗 error=(error)")
+            let fileManager = FileManager.default
+            do{
+                try fileManager.createDirectory(atPath: folderPath,  withIntermediateDirectories: true, attributes: nil)
+                self.user.ssmixpath = "file://"+folderPath //保存処理の際に使いやすいよう、フルパスに直して保存
+            }catch {
+                print("フォルダ作成に失敗 error=(error)")
+            }
+        }else{
+            print("SSMIX folder already exists!")
         }
+
     }
     
     func exportMovie(sourceURL: URL, destinationURL: URL, fileType: AVFileType) -> Void {

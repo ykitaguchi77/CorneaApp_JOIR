@@ -19,6 +19,7 @@ class User : ObservableObject {
     @Published var selected_hospital: Int = 0
     @Published var selected_disease: Int = 0
     @Published var free_disease: String = ""
+    @Published var ssmixpath: String = "" //JOIR転送用フォルダ
     @Published var gender: [String] = ["", "男", "女"]
     @Published var birthdate: String = ""
     @Published var side: [String] = ["", "右", "左"]
@@ -169,12 +170,16 @@ struct ContentView: View {
                     //データの初期化
                     self.user.date = Date()
                     self.user.id = ""
+                    self.user.birthdate = ""
                     self.user.imageNum = 0
+                    self.user.selected_gender = 0
                     self.user.selected_side = 0
                     self.user.selected_hospital = 0
                     self.user.selected_disease = 0
                     self.user.free_disease = ""
                     self.user.isSendData = false
+                    self.user.ssmixpath = ""
+                    
                     
                 }),
                       secondaryButton:.destructive(Text("いいえ"), action:{}))
