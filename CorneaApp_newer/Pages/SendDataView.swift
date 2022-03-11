@@ -305,15 +305,10 @@ struct SendData: View {
     //JOIRの画像命名
     public func imageName() -> String{
         let id = self.user.hashid
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyyMMdd_HHmmSSS"
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
-        let examDate = dateFormatter.string(from: self.user.date)
-        let maker = "APL"
+        let kind = "SUMAHO"
         let side = self.user.sidecode[user.selected_side]
         let imageNum = String(format: "%03d", self.user.imageNum)
-        let imageName = id + "_" + examDate + "_" + maker + "_" + side + "_" + imageNum
+        let imageName = id + "_" + kind + "_" + side + "_" + imageNum
         //print(imageName)
         return imageName
     }
@@ -326,8 +321,8 @@ struct SendData: View {
             
             //追加するフォルダの名前を定義
             let id = self.user.hashid
-            let id1 = self.user.hashid.prefix(3) //最初の3文字
-            let id2 = self.user.hashid.dropFirst(3).prefix(3) //3から6文字目
+            //let id1 = self.user.hashid.prefix(3) //最初の3文字
+            //let id2 = self.user.hashid.dropFirst(3).prefix(3) //3から6文字目
             
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyyMMdd"
@@ -336,23 +331,29 @@ struct SendData: View {
             let examDate = dateFormatter.string(from: self.user.date)
             
             let dateFormatter2 = DateFormatter()
-            dateFormatter2.dateFormat = "yyyyMMddHHmmSSS"
+            dateFormatter2.dateFormat = "yyyyMMddHHmmSSfff"
             dateFormatter2.locale = Locale(identifier: "en_US_POSIX")
             dateFormatter2.timeZone = TimeZone(identifier: "Asia/Tokyo")
             let examDate2 = dateFormatter2.string(from: self.user.date)
+            let orderNum = examDate2.dropFirst(1) //2文字目から。yyyMMddHHmmSSfff
+            
+            let hospitalAbb = self.user.hospitalsAbbreviated[user.selected_hospital]
             
             let dataType = "SUMAHO"
             let maker = "APL"
             let deviceName = "000"
-            let orderNum = "0000000000000000"
             let keyInfo = self.user.hospitalcode[user.selected_hospital] + maker + String(deviceName) + String(orderNum)
             let contentsFolder = id + "_" + examDate + "_" + dataType + "_" + keyInfo + "_" + examDate2 + "_26_1"
-            let folderPath = "\(dir)/storage/\(id1)/\(id2)/\(id)/\(examDate)/\(dataType)/\(contentsFolder)"
+            let folderPath = "\(dir)/\(hospitalAbb)/\(contentsFolder)"
 
+            print(folderPath)
+            
             let fileManager = FileManager.default
             do{
                 try fileManager.createDirectory(atPath: folderPath,  withIntermediateDirectories: true, attributes: nil)
                 self.user.ssmixpath = "file://"+folderPath //保存処理の際に使いやすいよう、フルパスに直して保存
+                
+                print(user.ssmixpath)
             }catch {
                 print("フォルダ作成に失敗 error=(error)")
             }
