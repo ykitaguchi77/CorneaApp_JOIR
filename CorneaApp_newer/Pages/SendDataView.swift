@@ -105,6 +105,7 @@ struct SendData: View {
                 GenerateHashID()
                 SaveToResultHolder()
                 ssmix2Folder() //保存用のフォルダを作成
+                createXml()
                 SaveToDoc()
                 self.user.isSendData = true
                 self.user.imageNum += 1 //画像番号を増やす
@@ -259,15 +260,15 @@ struct SendData: View {
             return false
         }
         
-        
-        do {
-            try jsonfile.write(to: ssmixJsonURL, atomically: true, encoding: .utf8)
-            print("successfully saved json to doc (ssmix)")
-        } catch {
-            //エラー処理
-            print("Jsonを保存できませんでした (ssmix)")
-            return false
-        }
+//        //ssmixフォルダ内にjsonを保存→XMLを保存することとなったのでdeprecated
+//        do {
+//            try jsonfile.write(to: ssmixJsonURL, atomically: true, encoding: .utf8)
+//            print("successfully saved json to doc (ssmix)")
+//        } catch {
+//            //エラー処理
+//            print("Jsonを保存できませんでした (ssmix)")
+//            return false
+//        }
         
         return true
     }
@@ -305,13 +306,156 @@ struct SendData: View {
     //JOIRの画像命名
     public func imageName() -> String{
         let id = self.user.hashid
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd"
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
+        let examDate = dateFormatter.string(from: self.user.date)
         let kind = "SUMAHO"
         let side = self.user.sidecode[user.selected_side]
         let imageNum = String(format: "%03d", self.user.imageNum)
-        let imageName = id + "_" + kind + "_" + side + "_" + imageNum
+        let imageName = id + "_" + examDate + "_" + kind + "_" + side + "_" + imageNum
         //print(imageName)
         return imageName
     }
+    
+    
+    //xmlファイルを作成
+    public func createXml(){
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
+        let examDate = dateFormatter.string(from: self.user.date)
+        
+        let dateFormatter2 = DateFormatter()
+        dateFormatter2.dateFormat = "HH:mm:SS"
+        dateFormatter2.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter2.timeZone = TimeZone(identifier: "Asia/Tokyo")
+        let examTime = dateFormatter2.string(from: self.user.date)
+        
+        let id = self.user.hashid
+        let gender = self.user.gender[user.selected_gender]
+        let side = self.user.side[user.selected_side]
+        //dateOfBirth 19780208 -> 1978-02-08 に整形
+        var dob = self.user.birthdate
+        let insertIdx1 = dob.index(dob.startIndex, offsetBy: 6)
+        let insertIdx2 = dob.index(dob.startIndex, offsetBy: 4)
+        dob.insert(contentsOf: "-", at: insertIdx1)
+        dob.insert(contentsOf: "-", at: insertIdx2)
+        
+        let fileName = imageName()
+        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let ssmixURL = URL(string: self.user.ssmixpath)!
+        let ssmixXmlURL = ssmixURL.appendingPathComponent(self.user.hashid+"_SUMAHO"+".xml")
+        let ssmixXmlURLPath = ssmixXmlURL.path
+        
+        //XMLファイルがあるかどうかを確認する
+        if FileManager.default.fileExists(atPath:ssmixXmlURLPath){
+            print("file exists")
+            guard let str = try? String(contentsOf: ssmixXmlURL) else {
+                fatalError("ファイル読み込みエラー")}
+            let result = str.range(of:"        </nsCORNEA:CORNEA>")
+            
+            if let theRange = result {
+                let latter = str[theRange.lowerBound...]
+                //print(latter)
+                let former = str.prefix(str.utf16.count - latter.utf16.count)
+                print(former)
+                
+                var i=1
+     
+                for i in 1...100 {
+                    var contain: Bool = former.contains("No=\"\(i)\"")
+                    if contain == true{
+                        print("\(i) is present")
+                    } else {
+                        print("\(i) is not present")
+                        var insert = """
+                            <nsCORNEA:List No=\"\(i)\">
+                                        <nsCORNEA:ImageType></nsCORNEA:ImageType>
+                                        <nsCORNEA:AcquitionDate>\(examDate)</nsCORNEA:AcquitionDate>
+                                        <nsCORNEA:AcquitionTime>\(examTime)</nsCORNEA:AcquitionTime>
+                                        <nsCORNEA:Timer></nsCORNEA:Timer>
+                                        <nsCORNEA:HorizontalFieldOfView></nsCORNEA:HorizontalFieldOfView>
+                                        <nsCORNEA:ImageLaterality>\(side)</nsCORNEA:ImageLaterality>
+                                        <nsCORNEA:PixelSpacing unit="mm"></nsCORNEA:PixelSpacing>
+                                        <nsCORNEA:FileName>\(fileName)</nsCORNEA:FileName>
+                                    </nsCORNEA:List>
+                        
+                        """
+                        var str = former + insert + latter
+                        //print(str)
+                        do {
+                             try str.write(to: ssmixXmlURL, atomically: true, encoding: .utf8)
+                             print("xml file successfully renewed!")
+                         } catch {
+                             print("Error: \(error)")
+                        }
+                        break
+                    }
+                }
+            }
+        } else {
+            print("file does not exist")
+            let str = """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <?xml-stylesheet type="text/xsl" href="Fundus_Stylesheet.xsl"?>
+                   
+                    <Ophthalmology xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:nsCommon="http://www.joia.or.jp/standardized/namespaces/Common" xmlns:nsFUNDUS="http://www.joia.or.jp/standardized/namespaces/Fundus" xsi:schemaLocation="http://www.joia.or.jp/standardized/namespaces/Common Common_schema.xsd
+                   http://www.joia.or.jp/standardized/namespaces/Fundus Fundus_schema.xsd">
+                   
+                        <nsCommon>
+                            <nsCommon:Compnany>Apple</nsCommon:Compnany>
+                            <nsCommon:ModelName>iPhone13pro</nsCommon:ModelName>
+                            <nsCommon:MachineNo></nsCommon:MachineNo>
+                            <nsCommon:ROMVersion></nsCommon:RomVersion>
+                            <nsCommon:Version></nsCommon:Version>
+                            <nsCommon:Date>\(examDate)</nsCommon:Date>
+                            <nsCommon:Time>\(examTime)</nsCommon:Time>
+                   
+                            <nsCommon:Patient>
+                               <nsCommon:No.></nsCommon:No.>
+                               <nsCommon:ID>\(id)</nsCommon:ID>
+                               <nsCommon:FirstName></nsCommon:FirstName>
+                               <nsCommon:LastName></nsCommon:LastName>
+                               <nsCommon:Sex>\(gender)</nsCommon:Sex>
+                               <nsCommon:Age></nsCommon:Age>
+                               <nsCommon:DOB>\(dob)</nsCommon:DOB>
+                               <nsCommon:NameJ1></nsCommon:NameJ1>
+                               <nsCommon:NameJ2></nsCommon:NameJ2>
+                            </nsCommon:Patient>
+                            <nsCommon:Operator>
+                               <nsCommon:No.></nsCommon:No.>
+                               <nsCommon:ID></nsCommon:ID>
+                            </nsCommon:Operator>
+                        </nsCommon>
+                   
+                        <nsCORNEA:Measure type="SUMAHO">
+                            <nsCORNEA:CORNEA>
+                                <nsCORNEA:List No="1">
+                                    <nsCORNEA:ImageType></nsCORNEA:ImageType>
+                                    <nsCORNEA:AcquitionDate>\(examDate)</nsCORNEA:AcquitionDate>
+                                    <nsCORNEA:AcquitionTime>\(examTime)</nsCORNEA:AcquitionTime>
+                                    <nsCORNEA:Timer></nsCORNEA:Timer>
+                                    <nsCORNEA:HorizontalFieldOfView></nsCORNEA:HorizontalFieldOfView>
+                                    <nsCORNEA:ImageLaterality></nsCORNEA:ImageLaterality>
+                                    <nsCORNEA:PixelSpacing unit="mm"></nsCORNEA:PixelSpacing>
+                                    <nsCORNEA:FileName>\(fileName)</nsCORNEA:FileName>
+                                </nsCORNEA:List>
+                            </nsCORNEA:CORNEA>
+                         </nsCORNEA:Measure>
+                   </Ophthalmology>
+                   """
+            do {
+                 try str.write(to: ssmixXmlURL, atomically: true, encoding: .utf8)
+                 print("xml file successfully created!")
+             } catch {
+                 print("Error: \(error)")
+             }
+        }
+     }
+    
     
     public func ssmix2Folder(){
         //1回目のみフォルダを作成する。すでにフォルダがあればそこに追加保存する
