@@ -322,17 +322,24 @@ struct SendData: View {
     
     //xmlファイルを作成
     public func createXml(){
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
-        let examDate = dateFormatter.string(from: self.user.date)
+        
+        let dateFormatter1 = DateFormatter()
+        dateFormatter1.dateFormat = "yyyyMMdd"
+        dateFormatter1.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter1.timeZone = TimeZone(identifier: "Asia/Tokyo")
+        let examDate1 = dateFormatter1.string(from: self.user.date)
         
         let dateFormatter2 = DateFormatter()
-        dateFormatter2.dateFormat = "HH:mm:SS"
+        dateFormatter2.dateFormat = "yyyy-MM-dd"
         dateFormatter2.locale = Locale(identifier: "en_US_POSIX")
         dateFormatter2.timeZone = TimeZone(identifier: "Asia/Tokyo")
-        let examTime = dateFormatter2.string(from: self.user.date)
+        let examDate2 = dateFormatter2.string(from: self.user.date)
+        
+        let dateFormatter3 = DateFormatter()
+        dateFormatter3.dateFormat = "HH:mm:SS"
+        dateFormatter3.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter3.timeZone = TimeZone(identifier: "Asia/Tokyo")
+        let examTime = dateFormatter3.string(from: self.user.date)
         
         let id = self.user.hashid
         let gender = self.user.gender[user.selected_gender]
@@ -347,7 +354,7 @@ struct SendData: View {
         let fileName = imageName()
         let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let ssmixURL = URL(string: self.user.ssmixpath)!
-        let ssmixXmlURL = ssmixURL.appendingPathComponent(self.user.hashid+"_SUMAHO"+".xml")
+        let ssmixXmlURL = ssmixURL.appendingPathComponent(self.user.hashid+"_\(examDate1)_SUMAHO.xml")
         let ssmixXmlURLPath = ssmixXmlURL.path
         
         //XMLファイルがあるかどうかを確認する
@@ -374,7 +381,7 @@ struct SendData: View {
                         var insert = """
                             <nsCORNEA:List No=\"\(i)\">
                                         <nsCORNEA:ImageType></nsCORNEA:ImageType>
-                                        <nsCORNEA:AcquitionDate>\(examDate)</nsCORNEA:AcquitionDate>
+                                        <nsCORNEA:AcquitionDate>\(examDate2)</nsCORNEA:AcquitionDate>
                                         <nsCORNEA:AcquitionTime>\(examTime)</nsCORNEA:AcquitionTime>
                                         <nsCORNEA:Timer></nsCORNEA:Timer>
                                         <nsCORNEA:HorizontalFieldOfView></nsCORNEA:HorizontalFieldOfView>
@@ -411,7 +418,7 @@ struct SendData: View {
                             <nsCommon:MachineNo></nsCommon:MachineNo>
                             <nsCommon:ROMVersion></nsCommon:RomVersion>
                             <nsCommon:Version></nsCommon:Version>
-                            <nsCommon:Date>\(examDate)</nsCommon:Date>
+                            <nsCommon:Date>\(examDate2)</nsCommon:Date>
                             <nsCommon:Time>\(examTime)</nsCommon:Time>
                    
                             <nsCommon:Patient>
@@ -435,7 +442,7 @@ struct SendData: View {
                             <nsCORNEA:CORNEA>
                                 <nsCORNEA:List No="1">
                                     <nsCORNEA:ImageType></nsCORNEA:ImageType>
-                                    <nsCORNEA:AcquitionDate>\(examDate)</nsCORNEA:AcquitionDate>
+                                    <nsCORNEA:AcquitionDate>\(examDate2)</nsCORNEA:AcquitionDate>
                                     <nsCORNEA:AcquitionTime>\(examTime)</nsCORNEA:AcquitionTime>
                                     <nsCORNEA:Timer></nsCORNEA:Timer>
                                     <nsCORNEA:HorizontalFieldOfView></nsCORNEA:HorizontalFieldOfView>
