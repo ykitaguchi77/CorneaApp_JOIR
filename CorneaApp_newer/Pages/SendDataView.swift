@@ -242,7 +242,6 @@ struct SendData: View {
             // 動画をエクスポートする
             exportMovie(sourceURL: URL(string:ResultHolder.GetInstance().GetMovieUrls())!, destinationURL: movieURL, fileType: fileType)
             exportMovie(sourceURL: URL(string:ResultHolder.GetInstance().GetMovieUrls())!, destinationURL: ssmixMovieURL, fileType: fileType)
-
         }
             
             
@@ -312,7 +311,7 @@ struct SendData: View {
         dateFormatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
         let examDate = dateFormatter.string(from: self.user.date)
         let kind = "SUMAHO"
-        let side = self.user.sidecode[user.selected_side]
+        let side = self.user.sideCode[user.selected_side]
         let imageNum = String(format: "%03d", self.user.imageNum)
         let imageName = id + "_" + examDate + "_" + kind + "_" + side + "_" + imageNum
         //print(imageName)
@@ -342,7 +341,7 @@ struct SendData: View {
         let examTime = dateFormatter3.string(from: self.user.date)
         
         let id = self.user.hashid
-        let gender = self.user.gender[user.selected_gender]
+        let gender = self.user.genderCode[user.selected_gender]
         let side = self.user.side[user.selected_side]
         //dateOfBirth 19780208 -> 1978-02-08 に整形
         var dob = self.user.birthdate
@@ -352,6 +351,13 @@ struct SendData: View {
         dob.insert(contentsOf: "-", at: insertIdx2)
         
         let fileName = imageName()
+        var fileNameExt = "aaa"
+        if ResultHolder.GetInstance().GetMovieUrls() == ""{
+            fileNameExt = ".png"
+        }else{
+            fileNameExt = ".mp4"
+        }
+                
         let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let ssmixURL = URL(string: self.user.ssmixpath)!
         let ssmixXmlURL = ssmixURL.appendingPathComponent(self.user.hashid+"_\(examDate1)_SUMAHO.xml")
@@ -381,13 +387,13 @@ struct SendData: View {
                         var insert = """
                             <nsCORNEA:List No=\"\(i)\">
                                         <nsCORNEA:ImageType></nsCORNEA:ImageType>
-                                        <nsCORNEA:AcquitionDate>\(examDate2)</nsCORNEA:AcquitionDate>
-                                        <nsCORNEA:AcquitionTime>\(examTime)</nsCORNEA:AcquitionTime>
+                                        <nsCORNEA:AcquisitionDate>\(examDate2)</nsCORNEA:AcquisitionDate>
+                                        <nsCORNEA:AcquisitionTime>\(examTime)</nsCORNEA:AcquisitionTime>
                                         <nsCORNEA:Timer></nsCORNEA:Timer>
                                         <nsCORNEA:HorizontalFieldOfView></nsCORNEA:HorizontalFieldOfView>
                                         <nsCORNEA:ImageLaterality>\(side)</nsCORNEA:ImageLaterality>
                                         <nsCORNEA:PixelSpacing unit="mm"></nsCORNEA:PixelSpacing>
-                                        <nsCORNEA:FileName>\(fileName)</nsCORNEA:FileName>
+                                        <nsCORNEA:FileName>\(fileName).\(fileNameExt)</nsCORNEA:FileName>
                                     </nsCORNEA:List>
                         
                         """
@@ -406,17 +412,17 @@ struct SendData: View {
         } else {
             print("file does not exist")
             let str = """
-                    <?xml version="1.0" encoding="UTF-8"?>
-                    <?xml-stylesheet type="text/xsl" href="Fundus_Stylesheet.xsl"?>
+                   <?xml version="1.0" encoding="UTF-8"?>
+                   <?xml-stylesheet type="text/xsl" href="Fundus_Stylesheet.xsl"?>
                    
-                    <Ophthalmology xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:nsCommon="http://www.joia.or.jp/standardized/namespaces/Common" xmlns:nsFUNDUS="http://www.joia.or.jp/standardized/namespaces/Fundus" xsi:schemaLocation="http://www.joia.or.jp/standardized/namespaces/Common Common_schema.xsd
+                   <Ophthalmology xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:nsCommon="http://www.joia.or.jp/standardized/namespaces/Common" xmlns:nsCORNEA="http://www.joia.or.jp/standardized/namespaces/Cornea" xsi:schemaLocation="http://www.joia.or.jp/standardized/namespaces/Common Common_schema.xsd
                    http://www.joia.or.jp/standardized/namespaces/Fundus Fundus_schema.xsd">
                    
-                        <nsCommon>
+                        <nsCommon:Common>
                             <nsCommon:Compnany>Apple</nsCommon:Compnany>
                             <nsCommon:ModelName>iPhone13pro</nsCommon:ModelName>
                             <nsCommon:MachineNo></nsCommon:MachineNo>
-                            <nsCommon:ROMVersion></nsCommon:RomVersion>
+                            <nsCommon:ROMVersion></nsCommon:ROMVersion>
                             <nsCommon:Version></nsCommon:Version>
                             <nsCommon:Date>\(examDate2)</nsCommon:Date>
                             <nsCommon:Time>\(examTime)</nsCommon:Time>
@@ -436,19 +442,19 @@ struct SendData: View {
                                <nsCommon:No.></nsCommon:No.>
                                <nsCommon:ID></nsCommon:ID>
                             </nsCommon:Operator>
-                        </nsCommon>
+                        </nsCommon:Common>
                    
                         <nsCORNEA:Measure type="SUMAHO">
                             <nsCORNEA:CORNEA>
                                 <nsCORNEA:List No="1">
                                     <nsCORNEA:ImageType></nsCORNEA:ImageType>
-                                    <nsCORNEA:AcquitionDate>\(examDate2)</nsCORNEA:AcquitionDate>
-                                    <nsCORNEA:AcquitionTime>\(examTime)</nsCORNEA:AcquitionTime>
+                                    <nsCORNEA:AcquisitionDate>\(examDate2)</nsCORNEA:AcquisitionDate>
+                                    <nsCORNEA:AcquisitionTime>\(examTime)</nsCORNEA:AcquisitionTime>
                                     <nsCORNEA:Timer></nsCORNEA:Timer>
                                     <nsCORNEA:HorizontalFieldOfView></nsCORNEA:HorizontalFieldOfView>
                                     <nsCORNEA:ImageLaterality></nsCORNEA:ImageLaterality>
                                     <nsCORNEA:PixelSpacing unit="mm"></nsCORNEA:PixelSpacing>
-                                    <nsCORNEA:FileName>\(fileName)</nsCORNEA:FileName>
+                                    <nsCORNEA:FileName>\(fileName)\(fileNameExt)</nsCORNEA:FileName>
                                 </nsCORNEA:List>
                             </nsCORNEA:CORNEA>
                          </nsCORNEA:Measure>

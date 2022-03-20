@@ -21,9 +21,10 @@ class User : ObservableObject {
     @Published var free_disease: String = ""
     @Published var ssmixpath: String = "" //JOIR転送用フォルダ
     @Published var gender: [String] = ["", "男", "女"]
+    @Published var genderCode: [String] = ["O", "M", "F"]
     @Published var birthdate: String = ""
     @Published var side: [String] = ["", "右", "左"]
-    @Published var sidecode: [String] = ["N", "R", "L"]
+    @Published var sideCode: [String] = ["N", "R", "L"]
     @Published var hospitals: [String] = ["", "筑波大", "大阪大", "東京歯科大市川", "鳥取大", "宮田眼科", "順天堂大", "ツカザキ病院", "広島大", "新潟大", "富山大", "福島県立医大", "東京医大"]
     @Published var hospitalsAbbreviated: [String] = ["", "TKB", "OSK", "TKS", "TTR", "MYT", "JTD", "TKZ", "HRS", "NGT", "TOY", "FKS", "TKI"]
     @Published var hospitalcode: [String] = ["", "5110051", "9900249", "2712404", "8010028", "0211008", "0514836", "4009334", "8010017", "8910011", "8010035", "0116930", "0415018"]
