@@ -155,7 +155,7 @@ struct SendData: View {
         birthdate.insert("-", at: birthdate.index(birthdate.startIndex, offsetBy: 6))
         birthdate.insert("-", at: birthdate.index(birthdate.startIndex, offsetBy: 4))
 
-        let hospitalcode = self.user.hospitalcode[user.selected_gender]
+        let hospitalcode = self.user.hospitalcode[user.selected_hospital]
         let newid = id + gender + birthdate + hospitalcode
         let dateid = Data(newid.utf8)
         let hashid = SHA256.hash(data: dateid)
@@ -410,7 +410,7 @@ struct SendData: View {
                 }
             }
         } else {
-            print("file does not exist")
+            print("create new xml file")
             let str = """
                    <?xml version="1.0" encoding="UTF-8"?>
                    <?xml-stylesheet type="text/xsl" href="Fundus_Stylesheet.xsl"?>
