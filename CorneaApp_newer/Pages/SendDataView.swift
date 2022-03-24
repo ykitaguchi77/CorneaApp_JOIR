@@ -393,7 +393,7 @@ struct SendData: View {
                                         <nsCORNEA:HorizontalFieldOfView></nsCORNEA:HorizontalFieldOfView>
                                         <nsCORNEA:ImageLaterality>\(side)</nsCORNEA:ImageLaterality>
                                         <nsCORNEA:PixelSpacing unit="mm"></nsCORNEA:PixelSpacing>
-                                        <nsCORNEA:FileName>\(fileName).\(fileNameExt)</nsCORNEA:FileName>
+                                        <nsCORNEA:FileName>\(fileName)\(fileNameExt)</nsCORNEA:FileName>
                                     </nsCORNEA:List>
                         
                         """
